@@ -4,8 +4,9 @@ import wget
 from pathlib import Path
 import geopandas as gpd
 from shapely.geometry import box
+import pandas as pd
 
-
+ROOT = Path(__file__).resolve().parents[3]
 
 def get_filetype_from_url(url: str):
     return os.path.splitext(urlparse(url).path)[1][1:]
@@ -30,3 +31,5 @@ def get_gisco_continental_europe(
     gisco = gisco.clip(bbox)
 
     return gisco
+
+region_df = pd.read_csv(Path(ROOT, "data", "S3_regions_codes_and_names_v2021.csv"))
