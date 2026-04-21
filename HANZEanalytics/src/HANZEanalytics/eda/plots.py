@@ -2,8 +2,6 @@ from matplotlib import pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from pathlib import Path
-import cartopy.crs as ccrs
-import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
 
@@ -26,7 +24,7 @@ def get_europe_canvas(ax = None, figsize = (18,22)):
     if ax is None:
         _, ax = plt.subplots(figsize=figsize, subplot_kw={"projection": LAEA})
 
-    ax.set_extent(EXTENT, crs=WGS84)
+
     ax.add_feature(cfeature.OCEAN.with_scale("50m"),     color=OCEANCOLOR,  zorder=0)
     ax.add_feature(cfeature.LAND.with_scale("50m"),      color=LANDCOLOR,   zorder=1)
     ax.add_feature(cfeature.COASTLINE.with_scale("50m"), linewidth=0.5,
@@ -34,7 +32,11 @@ def get_europe_canvas(ax = None, figsize = (18,22)):
     ax.add_feature(cfeature.BORDERS.with_scale("50m"),   linewidth=0.4,
                        edgecolor=BORDERCOLOR, zorder=2)
 
-    # return axis and coordinate reference system
+    ax.set_extent(EXTENT, crs=WGS84)
+    ax.set_autoscale_on(False)
+    ax.set_aspect("auto")
+
+# also return crs for later use of axis
     return ax, WGS84
 
 
@@ -43,12 +45,13 @@ def save_fig(filename:str, destination:Path = dest_plots ,dpi = 300, **kwargs) -
     plt.savefig(Path(destination, filename).with_suffix(".png"),dpi = dpi, **kwargs)
 
 
-def area_to_gif(regions, years, cummulative = False):
+def area_to_gif(regions, years, cummulative:bool = False, title:str = None):
 
     frames = []
 
     fig, ax = plt.subplots(subplot_kw={"projection": ccrs.PlateCarree()})
     ax, crs = get_europe_canvas(ax)
+
 
     for year in years:
         data = regions[regions["Year"] == year].to_crs(epsg=4326)
@@ -65,15 +68,11 @@ def area_to_gif(regions, years, cummulative = False):
             transform=ccrs.PlateCarree()
         )
 
-        if cummulative:
-            title = f"Cummulative reported areas until {year}"
-        else:
-            title = f"Reported area {year}"
-        ax.set_title(title)
+        if title is not None:
+            ax.set_title(title)
 
         fig.canvas.draw()
         frame = Image.fromarray(np.asarray(fig.canvas.buffer_rgba())).copy()
         frames.append(frame)
 
-    #frames = [f.convert("P") for f in frames]
     return frames
